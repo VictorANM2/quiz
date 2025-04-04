@@ -2,6 +2,15 @@ import pytest
 from model import Question, Choice
 
 
+@pytest.fixture
+def question_with_choices():
+    question = Question(title='Quiz Question', points=10, max_selections=2)
+    question.add_choice('Choice A', False)
+    question.add_choice('Choice B', True)
+    question.add_choice('Choice C', True)
+    question.add_choice('Choice D', False)
+    return question
+
 def test_create_question():
     question = Question(title='q1')
     assert question.id != None
@@ -128,3 +137,20 @@ def test_create_choice_with_invalid_text():
 
     with pytest.raises(Exception):
         question.add_choice('a' * 101)
+
+# Tests using fixtures
+def test_correct_choices_count(question_with_choices):
+    correct_choices = [choice for choice in question_with_choices.choices if choice.is_correct]
+
+    assert len(correct_choices) == 2
+    assert correct_choices[0].text == 'Choice B'
+    assert correct_choices[1].text == 'Choice C'
+
+
+def test_select_all_correct_choices(question_with_choices):
+    correct_choice_ids = [choice.id for choice in question_with_choices.choices if choice.is_correct]
+
+    selected = question_with_choices.select_choices(correct_choice_ids)
+
+    assert len(selected) == 2
+    assert set(selected) == set(correct_choice_ids)
